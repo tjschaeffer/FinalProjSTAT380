@@ -1,0 +1,13 @@
+---
+title: "STAT 380 Final Project"
+author: "Greg Westfall and TJ Schaeffer"
+output: html_notebook
+---
+
+
+```{r}
+terrorism <- read.csv("globalterrorismdb.csv")
+econData <- readxl::read_excel("WEO_Data.xls")
+
+```
+
