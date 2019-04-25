@@ -11,8 +11,7 @@ library(mdsr)
 
 
 ```{r}
-terrorism <- read.csv("globalterrorismdb.csv")
-#econData <- read.csv("WEO_Data copy.csv")
+terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
 
 ```
 
