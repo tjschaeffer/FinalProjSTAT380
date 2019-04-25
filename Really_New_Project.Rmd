@@ -12,7 +12,7 @@ library(mdsr)
 
 ```{r}
 terrorism <- read.csv("globalterrorismdb.csv")
-#econData <- read.csv("WEO_Data copy.csv")
+econData <- read.csv("WEO_Data copy.csv")
 
 ```
 
