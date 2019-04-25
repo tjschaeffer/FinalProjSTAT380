@@ -17,7 +17,7 @@ econData <- read.csv("WEO_Data copy.csv")
 ```
 
 ```{r}
-terrorism
+head(terrorism)
 
 ```
 
@@ -45,11 +45,3 @@ terrorism %>%
   geom_point(aes(color = nkillus))
 
 ```
-
-
-```{r}
-# econData %>%
-#   left_join(terrorism, by = c("Country" = "country_txt"))
-
-```
-
