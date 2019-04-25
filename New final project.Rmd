@@ -11,17 +11,13 @@ library(mdsr)
 
 
 ```{r}
-<<<<<<< HEAD
-library(readr)
-globalterrorismdb_0718dist <- read_csv("globalterrorismdb_0718dist.csv")
-=======
 terrorism <- read.csv("globalterrorismdb.csv")
 econData <- read.csv("WEO_Data copy.csv")
 
 ```
 
 ```{r}
-terrorism
+head(terrorism)
 
 ```
 
@@ -49,12 +45,3 @@ terrorism %>%
   geom_point(aes(color = nkillus))
 
 ```
-
-
-```{r}
-# econData %>%
-#   left_join(terrorism, by = c("Country" = "country_txt"))
-
->>>>>>> a2402ab300a116533775f80d2b3b1a19df6f5d21
-```
-
