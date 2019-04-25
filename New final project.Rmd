@@ -5,16 +5,30 @@ output: html_notebook
 ---
 
 ```{r}
+# Libraries
 library(mdsr)
+library(readr)
+library(dplyr)
+```
+
+
+```{r}
+# Reading in Terrorism 
+terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
+
+econData <- read.csv("WEO_Data.csv")
+
+```
+
+```{r}
+econData <- read.csv("WEO_Data.csv")
 
 ```
 
 
 ```{r}
-terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
-
-econData <- read.csv("WEO_Data.csv")
-
+# head(terrorism)
+# head(econData)
 ```
 
 
@@ -23,15 +37,13 @@ terrorism %>%
   group_by(country_txt) %>%
   summarise(count = n()) %>%
   arrange(desc(count))
-
 ```
 
 ```{r}
 terrorism %>%
-  sample_n(5000) %>%
+  sample(5000) %>%
   ggplot(aes(x = longitude, y = latitude)) +
   geom_point()
-
 ```
 
 ```{r}
@@ -41,8 +53,14 @@ terrorism %>%
   filter(nkillus > 0) %>%
   ggplot(aes(x = longitude, y = latitude)) +
   geom_point(aes(color = nkillus))
+```
+
+```{r}
+# terrorism %>%
+#   inner_join(econData)
 
 ```
+
 
 ```{r}
 head(econData)
@@ -50,16 +68,22 @@ head(econData)
 ```
 
 ```{r}
-i = 5
-while(i <= 30){
-  econData %>%
-    hablar::as_reliable_num(unlist(econData[i]))
-  # for(j in nrow(econData)){
-  #   econData[i, j] = ifelse(as.numeric(econData[i, j] !=)
-  # }
-  i = i + 1
-}
+#rm(list = ls())
+econData %>%
+  mutate(column = gsub(",", "", column)
+         
+econNumeric <- apply(X = econData[,5:30], FUN = as.numeric, MARGIN = 2)
 
+econDataNew <-
+  econData %>%
+  select(c(1:4))
+  
+econData2 <-
+  as.data.frame(econNumeric)
+
+econDataNew %>%
+  cbind(econData2)
+  
 ```
 
 ```{r}
@@ -69,3 +93,5 @@ while(i <= 30){
 
 ```
 
+=======
+>>>>>>> b512a2d7657cc52fb32fb8fd75891d999bf73806
