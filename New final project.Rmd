@@ -68,10 +68,6 @@ head(econData)
 ```
 
 ```{r}
-#rm(list = ls())
-econData %>%
-  mutate(column = gsub(",", "", column)
-         
 econNumeric <- apply(X = econData[,5:30], FUN = as.numeric, MARGIN = 2)
 
 econDataNew <-
