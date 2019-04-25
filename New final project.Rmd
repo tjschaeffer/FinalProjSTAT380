@@ -53,7 +53,7 @@ head(econData)
 i = 5
 while(i <= 30){
   econData %>%
-    hablar::as_reliable_num(econData[i])
+    hablar::as_reliable_num(unlist(econData[i]))
   # for(j in nrow(econData)){
   #   econData[i, j] = ifelse(as.numeric(econData[i, j] !=)
   # }
