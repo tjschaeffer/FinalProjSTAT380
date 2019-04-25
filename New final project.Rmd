@@ -5,35 +5,42 @@ output: html_notebook
 ---
 
 ```{r}
+# Libraries
 library(mdsr)
-
+library(readr)
+library(dplyr)
 ```
 
 
 ```{r}
+# Reading in Terrorism 
 terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
-
 ```
 
 ```{r}
-#head(terrorism)
-
+econData <- read.csv("WEO_Data.csv")
 ```
+
+
+
+```{r}
+head(terrorism)
+head(econData)
+```
+
 
 ```{r}
 terrorism %>%
   group_by(country_txt) %>%
   summarise(count = n()) %>%
   arrange(desc(count))
-
 ```
 
 ```{r}
 terrorism %>%
-  sample_n(5000) %>%
+  sample(5000) %>%
   ggplot(aes(x = longitude, y = latitude)) +
   geom_point()
-
 ```
 
 ```{r}
@@ -43,5 +50,24 @@ terrorism %>%
   filter(nkillus > 0) %>%
   ggplot(aes(x = longitude, y = latitude)) +
   geom_point(aes(color = nkillus))
-
 ```
+
+```{r}
+terrorism %>%
+  inner_join()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
