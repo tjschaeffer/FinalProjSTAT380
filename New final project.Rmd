@@ -13,12 +13,10 @@ library(mdsr)
 ```{r}
 terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
 
-```
-
-```{r}
-#head(terrorism)
+econData <- read.csv("WEO_Data.csv")
 
 ```
+
 
 ```{r}
 terrorism %>%
@@ -45,3 +43,29 @@ terrorism %>%
   geom_point(aes(color = nkillus))
 
 ```
+
+```{r}
+head(econData)
+
+```
+
+```{r}
+i = 5
+while(i <= 30){
+  econData %>%
+    hablar::as_reliable_num(econData[i])
+  # for(j in nrow(econData)){
+  #   econData[i, j] = ifelse(as.numeric(econData[i, j] !=)
+  # }
+  i = i + 1
+}
+
+```
+
+```{r}
+# econData %>%
+#   rename("country_txt" = "Country") %>%
+#   inner_join(terrorism, by = "country_txt")
+
+```
+
