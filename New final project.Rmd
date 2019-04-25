@@ -16,7 +16,7 @@ terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrori
 ```
 
 ```{r}
-head(terrorism)
+#head(terrorism)
 
 ```
 
@@ -30,6 +30,7 @@ terrorism %>%
 
 ```{r}
 terrorism %>%
+  sample_n(5000) %>%
   ggplot(aes(x = longitude, y = latitude)) +
   geom_point()
 
