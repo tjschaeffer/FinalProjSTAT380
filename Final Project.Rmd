@@ -6,8 +6,7 @@ output: html_notebook
 
 
 ```{r}
-terrorism <- read.csv("globalterrorismdb.csv")
-econData <- readxl::read_excel("WEO_Data.xls")
-
+library(readr)
+globalterrorismdb_0718dist <- read_csv("globalterrorismdb_0718dist.csv")
 ```
 
