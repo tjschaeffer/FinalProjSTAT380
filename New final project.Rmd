@@ -25,13 +25,6 @@ econData <- read.csv("WEO_Data.csv")
 
 ```
 
-
-```{r}
-# head(terrorism)
-# head(econData)
-```
-
-
 ```{r}
 terrorism %>%
   group_by(country_txt) %>%
@@ -77,17 +70,20 @@ econDataNew <-
 econData2 <-
   as.data.frame(econNumeric)
 
-econDataNew %>%
+econDataNew <-
+  econDataNew %>%
   cbind(econData2)
+
+econDataNew
   
 ```
 
 ```{r}
-# econData %>%
-#   rename("country_txt" = "Country") %>%
-#   inner_join(terrorism, by = "country_txt")
+econDataNew %>%
+  mutate(avg = ("X1999" + "X2000" + "X2001" + "X2002" + "X2003" + "X2004" + "X2005" + 
+                "X2006" + "X2007" + "X2008" + "X2009" + "X2010" + "X2011" + "X2012" + 
+                "X2013" + "X2014" + "X2015" + "X2016" + "X2017" + "X2018" + "X2019" + 
+                "X2020" + "X2021" + "X2022" + "X2023" + "X2024") / 26)
 
 ```
 
-=======
->>>>>>> b512a2d7657cc52fb32fb8fd75891d999bf73806
