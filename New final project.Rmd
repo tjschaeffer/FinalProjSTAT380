@@ -9,6 +9,8 @@ output: html_notebook
 library(mdsr)
 library(readr)
 library(dplyr)
+library(tidyr)
+
 ```
 
 
@@ -79,11 +81,18 @@ econDataNew
 ```
 
 ```{r}
-econDataNew %>%
-  mutate(avg = ("X1999" + "X2000" + "X2001" + "X2002" + "X2003" + "X2004" + "X2005" + 
-                "X2006" + "X2007" + "X2008" + "X2009" + "X2010" + "X2011" + "X2012" + 
-                "X2013" + "X2014" + "X2015" + "X2016" + "X2017" + "X2018" + "X2019" + 
-                "X2020" + "X2021" + "X2022" + "X2023" + "X2024") / 26)
+econDataTidy <-
+  econDataNew %>%
+  gather(key = "Year", value = "Value", 5:30)
+
+econDataTidy
+
+```
+
+```{r}
+econDataTidy %>%
+  group_by(Country, Subject.Descriptor, Units) %>%
+  summarise(average = mean(na.omit(Value)))
 
 ```
 
