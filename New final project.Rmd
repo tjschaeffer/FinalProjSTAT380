@@ -28,10 +28,14 @@ econData <- read.csv("WEO_Data.csv")
 ```
 
 ```{r}
-terrorism %>%
+terrorism_deaths <-
+  terrorism %>%
   group_by(country_txt) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
+  summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
+  arrange(desc(deaths))
+
+terrorism_deaths
+
 ```
 
 ```{r}
@@ -90,9 +94,57 @@ econDataTidy
 ```
 
 ```{r}
-econDataTidy %>%
+econAverages <-
+  econDataTidy %>%
   group_by(Country, Subject.Descriptor, Units) %>%
   summarise(average = mean(na.omit(Value)))
+
+econAverages
+
+```
+
+```{r}
+create_deaths_table <- function(x, y){
+  econAverages %>%
+    filter(Subject.Descriptor == x, Units == y) %>%
+    rename("country_txt" = "Country") %>%
+    left_join(terrorism_deaths, by = "country_txt") %>%
+    rename("Country" = "country_txt")
+}
+
+```
+
+```{r}
+PopDeaths <- create_deaths_table("Population", "Persons")
+PopDeaths
+
+```
+
+```{r}
+GDPDeaths <- create_deaths_table("Gross domestic product per capita, constant prices",
+                                 "Purchasing power parity; 2011 international dollar")
+GDPDeaths
+
+```
+
+```{r}
+InflationDeaths <- create_deaths_table("Inflation, average consumer prices",
+                                       "Index")
+InflationDeaths
+
+```
+
+```{r}
+SpendingDeaths <- create_deaths_table("General government total expenditure",
+                                      "Percent of GDP")
+SpendingDeaths
+
+```
+
+```{r}
+ImportDeaths <- create_deaths_table("Volume of imports of goods and services",
+                                    "Percent change")
+ImportDeaths
 
 ```
 
