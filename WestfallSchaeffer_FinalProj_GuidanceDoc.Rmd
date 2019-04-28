@@ -1,6 +1,6 @@
 ---
 title: 'Final Project: Guidance Document'
-author: "Author-1-Name & Author-2-Name"
+author: "Thomas Schaeffer & Greg Westfall"
 date: "Due April 30, 2019"
 output: html_notebook
 ---
