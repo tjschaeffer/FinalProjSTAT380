@@ -25,13 +25,13 @@ Line 111 (within function)
 *Description: Clear demonstration of proficiency should include proper use of 5 out of the following 6 topics from class: (+) general purpose data wrangling--e.g., filter, select mutate, summarise, arrange, group_by, etc. (+) spread & gather to stack/unstack variables (+) regular expressions (+) user-defined functions (+) loops and control flow (+) vectorized functions like the `apply` family, `purrr::map` or `dplyr::do`*
 
 (A) .Rmd Line number(s) for an example of general purpose data wrangling: 
-
+Lines 25-29
 
 (B) .Rmd Line number(s) for a spread & gather (or equivalent): 
-
+Lines 73-75
 
 (C) .Rmd Line number(s) for use of regular expressions: 
-
+Line 158
 
 (D) .Rmd Line number(s) for use of user-defined functions: 
 Lines 107-113
@@ -40,20 +40,20 @@ Lines 107-113
 
 
 (F) .Rmd Line number(s) for use of vectorized functions: 
-
+Line 55
 
 ### Data Visualization (all 4 required)
 
 *Description: Clear demonstration of proficiency should include at least FOUR distinct and useful data visualizations that are relevant to purpose of the analysis. Include at least one effective visualization with layered data from distinct data structures--e.g., a `geom` that plots data from a secondary data frame AND another must effectively display many--3 or more--variables. All plots must demonstrate good plotting practices.*
 
 (A) .Rmd Line number(s) for visualization with layered data from distinct data structures--e.g., a `geom` that plots data from a secondary data frame: 
-
+Lines 163-166
 
 (B) .Rmd Line number(s) for visualization displaying many--3 or more--variables (A, B, C, & D must be four **different** plots): 
 
 
 (C) .Rmd Line number(s) for a third visualization: 
-
+Lines 38-41
 
 (D) .Rmd Line number(s) for a third visualization: 
 
