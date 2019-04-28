@@ -9,6 +9,8 @@ output: html_notebook
 library(mdsr)
 library(readr)
 library(dplyr)
+library(tidyr)
+
 ```
 
 
@@ -26,10 +28,14 @@ econData <- read.csv("WEO_Data.csv")
 ```
 
 ```{r}
-terrorism %>%
+terrorism_deaths <-
+  terrorism %>%
   group_by(country_txt) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
+  summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
+  arrange(desc(deaths))
+
+terrorism_deaths
+
 ```
 
 ```{r}
@@ -79,11 +85,66 @@ econDataNew
 ```
 
 ```{r}
-econDataNew %>%
-  mutate(avg = ("X1999" + "X2000" + "X2001" + "X2002" + "X2003" + "X2004" + "X2005" + 
-                "X2006" + "X2007" + "X2008" + "X2009" + "X2010" + "X2011" + "X2012" + 
-                "X2013" + "X2014" + "X2015" + "X2016" + "X2017" + "X2018" + "X2019" + 
-                "X2020" + "X2021" + "X2022" + "X2023" + "X2024") / 26)
+econDataTidy <-
+  econDataNew %>%
+  gather(key = "Year", value = "Value", 5:30)
+
+econDataTidy
+
+```
+
+```{r}
+econAverages <-
+  econDataTidy %>%
+  group_by(Country, Subject.Descriptor, Units) %>%
+  summarise(average = mean(na.omit(Value)))
+
+econAverages
+
+```
+
+```{r}
+create_deaths_table <- function(x, y){
+  econAverages %>%
+    filter(Subject.Descriptor == x, Units == y) %>%
+    rename("country_txt" = "Country") %>%
+    left_join(terrorism_deaths, by = "country_txt") %>%
+    rename("Country" = "country_txt")
+}
+
+```
+
+```{r}
+PopDeaths <- create_deaths_table("Population", "Persons")
+PopDeaths
+
+```
+
+```{r}
+GDPDeaths <- create_deaths_table("Gross domestic product per capita, constant prices",
+                                 "Purchasing power parity; 2011 international dollar")
+GDPDeaths
+
+```
+
+```{r}
+InflationDeaths <- create_deaths_table("Inflation, average consumer prices",
+                                       "Index")
+InflationDeaths
+
+```
+
+```{r}
+SpendingDeaths <- create_deaths_table("General government total expenditure",
+                                      "Percent of GDP")
+SpendingDeaths
+
+```
+
+```{r}
+ImportDeaths <- create_deaths_table("Volume of imports of goods and services",
+                                    "Percent change")
+ImportDeaths
 
 ```
 
