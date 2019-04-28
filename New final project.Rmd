@@ -22,7 +22,6 @@ econData <- read.csv("WEO_Data.csv")
 
 
 ```{r}
-# Creating 
 terrorism_deaths <-
   terrorism %>%
   group_by(country_txt) %>%
