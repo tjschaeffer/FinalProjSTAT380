@@ -10,28 +10,19 @@ library(mdsr)
 library(readr)
 library(dplyr)
 library(tidyr)
-
 ```
 
 
 ```{r}
 # Reading in Terrorism 
 terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
-
-
-```
-
-```{r}
-#terrorism_clean <-
-#  terrorism[-c(1, 5:8, 10, 14:26, 29, 31:35, 37, 41, 43, 45, 49, 51, 60, 62, 64, 67, 68, 72:82, 84, )]
-```
-
-```{r}
+# Reading in Econ Data
 econData <- read.csv("WEO_Data.csv")
-
 ```
 
+
 ```{r}
+# Creating 
 country_terrorism_deaths <-
   terrorism %>%
   group_by(country_txt) %>%
@@ -39,7 +30,6 @@ country_terrorism_deaths <-
   arrange(desc(deaths))
 
 country_terrorism_deaths
-
 ```
 
 
@@ -62,18 +52,7 @@ terrorism %>%
 ```
 
 ```{r}
-# terrorism %>%
-#   inner_join(econData)
-
-```
-
-
-```{r}
-head(econData)
-
-```
-
-```{r}
+# Using apply to change values in data frame to numbers
 econNumeric <- apply(X = econData[,5:30], FUN = as.numeric, MARGIN = 2)
 
 econDataNew <-
@@ -88,10 +67,10 @@ econDataNew <-
   cbind(econData2)
 
 econDataNew
-  
 ```
 
 ```{r}
+# Using gather function to make data frame tidy
 econDataTidy <-
   econDataNew %>%
   gather(key = "Year", value = "Value", 5:30)
@@ -101,6 +80,7 @@ econDataTidy
 ```
 
 ```{r}
+# Creating average of values over the 26 years found in the data frame
 econAverages <-
   econDataTidy %>%
   group_by(Country, Subject.Descriptor, Units) %>%
@@ -111,6 +91,7 @@ econAverages
 ```
 
 ```{r}
+# User-defined function to create data frame based off subject indicator
 create_deaths_table <- function(x, y){
   econAverages %>%
     filter(Subject.Descriptor == x, Units == y) %>%
@@ -122,12 +103,13 @@ create_deaths_table <- function(x, y){
 ```
 
 ```{r}
+# Data frame with population and attacks/deaths
 PopDeaths <- create_deaths_table("Population", "Persons")
 PopDeaths
-
 ```
 
 ```{r}
+# Data frame with GDP
 GDPDeaths <- create_deaths_table("Gross domestic product per capita, constant prices",
                                  "Purchasing power parity; 2011 international dollar")
 GDPDeaths
@@ -135,13 +117,14 @@ GDPDeaths
 ```
 
 ```{r}
+# Data Frame with inflation
 InflationDeaths <- create_deaths_table("Inflation, average consumer prices",
                                        "Index")
 InflationDeaths
-
 ```
 
 ```{r}
+# Data frame involving total country spending
 SpendingDeaths <- create_deaths_table("General government total expenditure",
                                       "Percent of GDP")
 SpendingDeaths
@@ -149,6 +132,7 @@ SpendingDeaths
 ```
 
 ```{r}
+# Data frame involving percent change in imported goods and services
 ImportDeaths <- create_deaths_table("Volume of imports of goods and services",
                                     "Percent change")
 ImportDeaths
