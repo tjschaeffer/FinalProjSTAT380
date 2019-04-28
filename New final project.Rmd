@@ -18,8 +18,12 @@ library(tidyr)
 # Reading in Terrorism 
 terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
 
-econData <- read.csv("WEO_Data.csv")
 
+```
+
+```{r}
+#terrorism_clean <-
+#  terrorism[-c(1, 5:8, 10, 14:26, 29, 31:35, 37, 41, 43, 45, 49, 51, 60, 62, 64, 67, 68, 72:82, 84, )]
 ```
 
 ```{r}
@@ -28,15 +32,18 @@ econData <- read.csv("WEO_Data.csv")
 ```
 
 ```{r}
-terrorism_deaths <-
+country_terrorism_deaths <-
   terrorism %>%
   group_by(country_txt) %>%
   summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
   arrange(desc(deaths))
 
-terrorism_deaths
+country_terrorism_deaths
 
 ```
+
+
+
 
 ```{r}
 terrorism %>%
@@ -108,7 +115,7 @@ create_deaths_table <- function(x, y){
   econAverages %>%
     filter(Subject.Descriptor == x, Units == y) %>%
     rename("country_txt" = "Country") %>%
-    left_join(terrorism_deaths, by = "country_txt") %>%
+    left_join(country_terrorism_deaths, by = "country_txt") %>%
     rename("Country" = "country_txt")
 }
 

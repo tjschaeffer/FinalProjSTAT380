@@ -17,7 +17,7 @@ output: html_notebook
 *Description: Report includes meaningful contributions from (at least) two different data sources that are JOINED for the analysis*
 
 (A) .Rmd Line number(s) for join operation: 
-
+Line 111 (within function)
 
 
 ### Data Wrangling (5 of 6 required)
@@ -34,7 +34,7 @@ output: html_notebook
 
 
 (D) .Rmd Line number(s) for use of user-defined functions: 
-
+Lines 107-113
 
 (E) .Rmd Line number(s) for use of loops and/or control flow: 
 
