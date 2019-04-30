@@ -22,13 +22,13 @@ econData <- read.csv("WEO_Data.csv")
 
 
 ```{r}
-terrorism_deaths <-
+year_terrorism_deaths <-
   terrorism %>%
   group_by(country_txt) %>%
   summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
   arrange(desc(deaths))
 
-terrorism_deaths
+year_terrorism_deaths
 ```
 
 
@@ -43,7 +43,7 @@ terrorism %>%
 
 ```{r}
 terrorism %>%
-  filter(country_txt == "United States") %>%
+  group_by(region)
   filter(longitude < 0) %>%
   filter(nkillus > 0) %>%
   ggplot(aes(x = longitude, y = latitude)) +
@@ -164,5 +164,37 @@ ggplot(data = year_terrorism_deaths, aes(x = Year, y = attacks)) +
   geom_point(color = "red", shape = 15) + geom_line(color = "red") +
   geom_point(aes(x = Year, y = worldPop), color = "blue", data = YearEconDataClean) +
   geom_line(aes(x = Year, y = worldPop), color = "blue", data = YearEconDataClean)
+```
+
+```{r}
+ytdtop25 <-
+  year_terrorism_deaths %>%
+  arrange(attacks) %>%
+  head(25)
+
+ytd2 <- ytdtop25[-c(1)]
+
+ytd2 <-
+  ytd2 %>%
+  select(attacks, deaths) %>%
+  arrange(attacks) %>%
+  head(25)
+
+ytd_std <-
+  year_terrorism_deaths
+  scale(ytd2) %>%
+  as.data.frame()
+
+ytd_dist <- dist(ytd_std)
+
+ytd_dendo <-
+  ytd_dist %>%
+  hclust(method = "complete")
+
+labels <- ytd2$country_txt
+
+ytd_dendo %>%
+  plot(cex = 0.9, labels = labels, lwd = 2,
+       main = "NCI60 Dendogram with Complete Linkage")
 ```
 
