@@ -48,22 +48,11 @@ terrorism_deaths
 ```{r}
 terrorism_words <-
   terrorism %>%
-  sample(5000) %>%
-  select(attacktype1_txt)
+  mutate(weapsubtype1_txt = as.character(weapsubtype1_txt)) %>%
+  select(weapsubtype1_txt) %>%
+  unnest_tokens(output = word, input = weapsubtype1_txt)
+terrorism_words
 
- write.table(terrorism_words, file = "terrorism_words.txt", quote = FALSE,
-            sep = "", row.names = FALSE, col.names = FALSE)
-
-terrorism_txt <- 
-  readtext(file = "terrorism_words.txt") %>%
-  as_tibble()
-
-toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " "))
-terrorism_txt <- tm_map(terrorism_words, toSpace, "/")
-terrorism_words <- tm_map(terrorism_words, toSpace, "@")
-terrorism_words <- tm_map(terrorism_words, toSpace, "\\|")
-
-head(terrorism_txt)
 ```
 
 ```{r}
