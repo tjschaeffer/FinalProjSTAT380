@@ -13,7 +13,12 @@ library(tidyr)
 library(tidytext)
 library(wordcloud)
 library(readtext)
-
+library(class)
+library(tibble)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
 ```
 
 
@@ -36,19 +41,24 @@ terrorism_deaths
 ```
 
 ```{r}
-# terrorism_words <-
-#   terrorism %>%
-#   select(attacktype1_txt, weaptype1_txt, weapsubtype1_txt, weapdetail)
-# 
-# write.table(terrorism_words, file = "terrorism_words.txt", quote = FALSE,
-#             sep = " ", row.names = FALSE, col.names = FALSE)
-# 
-# terrorism_txt <- 
-#   readtext(file = "terrorism_words.txt") %>%
-#   as.tibble()
-# 
-# head(terrorism_txt)
+terrorism_words <-
+  terrorism %>%
+  sample(5000) %>%
+  select(attacktype1_txt)
 
+ write.table(terrorism_words, file = "terrorism_words.txt", quote = FALSE,
+            sep = "", row.names = FALSE, col.names = FALSE)
+
+terrorism_txt <- 
+  readtext(file = "terrorism_words.txt") %>%
+  as_tibble()
+
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", ))
+terrorism_words <- tm_map(terrorism_words, toSpace, "/")
+terrorism_words <- tm_map(terrorism_words, toSpace, "@")
+terrorism_words <- tm_map(terrorism_words, toSpace, "\\|")
+
+head(terrorism_txt)
 ```
 
 ```{r}
@@ -128,6 +138,34 @@ create_deaths_table <- function(x, y){
 # Data frame with population and attacks/deaths
 PopDeaths <- create_deaths_table("Population", "Persons")
 PopDeaths
+```
+
+```{r}
+# set RNG seed for reproducible results
+set.seed(538) 
+# partition the data
+n <- nrow(PopDeaths)
+test_idx <- sample.int(n, size = round(0.25 * n)) # select row numbers for the test set
+train <- PopDeaths[-test_idx, ]  # exclude the test set cases
+nrow(train)
+
+train <- 
+  train %>%
+  filter(!is.na(attacks)) %>%
+  mutate(average_attacks = ifelse(attacks > mean(attacks), "YES", "NO"))
+
+train_quant <- 
+  train %>%
+  select(Country, average_attacks, attacks, deaths)
+
+# KNN classifier
+suicide_knn <- knn(train = train_quant, test = train_quant, cl = train$average_attacks, k = 5)
+# confusion matrix
+confusion <- tally(suicide_knn ~ average_attacks, data = train, format = "count")
+confusion
+
+knn_acc <- sum(diag(confusion)) / nrow(train) * 100
+knn_acc
 ```
 
 ```{r}
@@ -216,4 +254,6 @@ td_dendo %>%
   plot(cex = 0.9, labels = labels, lwd = 2,
        main = "Countries with Most Terrorist Attacks")
 ```
+
+
 
