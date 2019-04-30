@@ -189,20 +189,14 @@ ggplot(data = year_terrorism_deaths, aes(x = Year, y = attacks)) +
 ```{r}
 ytdtop25 <-
   year_terrorism_deaths %>%
-  arrange(attacks) %>%
+  arrange(desc(attacks)) %>%
   head(25)
 
 ytd2 <- ytdtop25[-c(1)]
 
-ytd2 <-
-  ytd2 %>%
-  select(attacks, deaths) %>%
-  arrange(attacks) %>%
-  head(25)
-
 ytd_std <-
-  year_terrorism_deaths %>%
-  scale(ytd2) %>%
+  ytd2 %>%
+  scale(ytd2)
   as.data.frame()
 
 ytd_dist <- dist(ytd_std)
@@ -211,7 +205,7 @@ ytd_dendo <-
   ytd_dist %>%
   hclust(method = "complete")
 
-labels <- ytd2$country_txt
+labels <- ytdtop25$country_txt
 
 ytd_dendo %>%
   plot(cex = 0.9, labels = labels, lwd = 2,
