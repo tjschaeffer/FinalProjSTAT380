@@ -36,18 +36,18 @@ year_terrorism_deaths
 ```
 
 ```{r}
-terrorism_words <-
-  terrorism %>%
-  select(attacktype1_txt, weaptype1_txt, weapsubtype1_txt, weapdetail)
-
-write.table(terrorism_words, file = "terrorism_words.txt", quote = FALSE,
-            sep = " ", row.names = FALSE, col.names = FALSE)
-
-terrorism_txt <- 
-  readtext(file = "terrorism_words.txt") %>%
-  as.tibble()
-
-head(terrorism_txt)
+# terrorism_words <-
+#   terrorism %>%
+#   select(attacktype1_txt, weaptype1_txt, weapsubtype1_txt, weapdetail)
+# 
+# write.table(terrorism_words, file = "terrorism_words.txt", quote = FALSE,
+#             sep = " ", row.names = FALSE, col.names = FALSE)
+# 
+# terrorism_txt <- 
+#   readtext(file = "terrorism_words.txt") %>%
+#   as.tibble()
+# 
+# head(terrorism_txt)
 
 ```
 
@@ -66,7 +66,7 @@ terrorism %>%
 
 ```{r}
 terrorism %>%
-  group_by(region)
+  filter(country_txt == "United States") %>%
   filter(longitude < 0) %>%
   filter(nkillus > 0) %>%
   ggplot(aes(x = longitude, y = latitude)) +
@@ -201,7 +201,7 @@ ytd2 <-
   head(25)
 
 ytd_std <-
-  year_terrorism_deaths
+  year_terrorism_deaths %>%
   scale(ytd2) %>%
   as.data.frame()
 
