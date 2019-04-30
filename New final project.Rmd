@@ -5,11 +5,15 @@ output: html_notebook
 ---
 
 ```{r}
-# Libraries
+# Packages
 library(mdsr)
 library(readr)
 library(dplyr)
 library(tidyr)
+library(tidytext)
+library(wordcloud)
+library(readtext)
+
 ```
 
 
@@ -31,7 +35,26 @@ year_terrorism_deaths <-
 year_terrorism_deaths
 ```
 
+```{r}
+terrorism_words <-
+  terrorism %>%
+  select(attacktype1_txt, weaptype1_txt, weapsubtype1_txt, weapdetail)
 
+write.table(terrorism_words, file = "terrorism_words.txt", quote = FALSE,
+            sep = " ", row.names = FALSE, col.names = FALSE)
+
+terrorism_txt <- 
+  readtext(file = "terrorism_words.txt") %>%
+  as.tibble()
+
+head(terrorism_txt)
+
+```
+
+```{r}
+wordcloud("terrorism_words.txt", max.words = 10)
+
+```
 
 
 ```{r}
@@ -47,7 +70,7 @@ terrorism %>%
   filter(longitude < 0) %>%
   filter(nkillus > 0) %>%
   ggplot(aes(x = longitude, y = latitude)) +
-  geom_point(aes(color = nkillus))
+  geom_point(aes(color = nkill))
 ```
 
 ```{r}
@@ -149,9 +172,6 @@ year_terrorism_deaths <-
   summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
   rename("Year" = "iyear") %>%
   arrange(Year)
-
-YearEconData
-year_terrorism_deaths
 
 YearEconDataClean <-
   YearEconData %>%
