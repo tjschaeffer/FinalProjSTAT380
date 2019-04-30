@@ -19,6 +19,8 @@ library(tm)
 library(SnowballC)
 library(wordcloud)
 library(RColorBrewer)
+library(randomForest)
+
 ```
 
 
@@ -53,8 +55,8 @@ terrorism_txt <-
   readtext(file = "terrorism_words.txt") %>%
   as_tibble()
 
-toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", ))
-terrorism_words <- tm_map(terrorism_words, toSpace, "/")
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " "))
+terrorism_txt <- tm_map(terrorism_words, toSpace, "/")
 terrorism_words <- tm_map(terrorism_words, toSpace, "@")
 terrorism_words <- tm_map(terrorism_words, toSpace, "\\|")
 
@@ -129,7 +131,9 @@ create_deaths_table <- function(x, y){
     filter(Subject.Descriptor == x, Units == y) %>%
     rename("country_txt" = "Country") %>%
     left_join(terrorism_deaths, by = "country_txt") %>%
-    rename("Country" = "country_txt")
+    filter(!is.na(attacks) & !is.na(deaths)) %>%
+    rename("Country" = "country_txt") %>%
+    mutate(above_below = ifelse(attacks >= 1073.441, "above", "below"))
 }
 
 ```
@@ -141,38 +145,59 @@ PopDeaths
 ```
 
 ```{r}
-# set RNG seed for reproducible results
-set.seed(538) 
-# partition the data
-n <- nrow(PopDeaths)
-test_idx <- sample.int(n, size = round(0.25 * n)) # select row numbers for the test set
-train <- PopDeaths[-test_idx, ]  # exclude the test set cases
-nrow(train)
+# logistic regression
+pop_logit <- lm(attacks ~ average, data = PopDeaths)
+msummary(pop_logit)
 
-train <- 
-  train %>%
-  filter(!is.na(attacks)) %>%
-  mutate(average_attacks = ifelse(attacks > mean(attacks), "YES", "NO"))
-
-train_quant <- 
-  train %>%
-  select(Country, average_attacks, attacks, deaths)
-
-# KNN classifier
-suicide_knn <- knn(train = train_quant, test = train_quant, cl = train$average_attacks, k = 5)
-# confusion matrix
-confusion <- tally(suicide_knn ~ average_attacks, data = train, format = "count")
-confusion
-
-knn_acc <- sum(diag(confusion)) / nrow(train) * 100
-knn_acc
 ```
+
+```{r}
+# logistic confusion matrix
+pop_logitProb <- predict(pop_logit, newdata = PopDeaths, type = "response")
+pop_logit <- ifelse(pop_logitProb > mean(PopDeaths$attacks), yes = "above", "below")
+confusion_logit_pop <- tally(pop_logit ~ above_below, data = PopDeaths, 
+                             format = "count")
+confusion_logit_pop
+
+```
+
+```{r}
+# model accuracy
+pop_logit_acc <- sum(diag(confusion_logit_pop)) / nrow(PopDeaths) * 100
+pop_logit_acc
+
+```
+
 
 ```{r}
 # Data frame with GDP
 GDPDeaths <- create_deaths_table("Gross domestic product per capita, constant prices",
                                  "Purchasing power parity; 2011 international dollar")
 GDPDeaths
+
+```
+
+```{r}
+# logistic regression
+gdp_logit <- lm(attacks ~ average, data = GDPDeaths)
+msummary(gdp_logit)
+
+```
+
+```{r}
+# logistic confusion matrix
+gdp_logitProb <- predict(gdp_logit, newdata = GDPDeaths, type = "response")
+gdp_logit <- ifelse(gdp_logitProb > mean(GDPDeaths$attacks), yes = "above", "below")
+confusion_logit_gdp <- tally(gdp_logit ~ above_below, data = GDPDeaths, 
+                             format = "count")
+confusion_logit_gdp
+
+```
+
+```{r}
+# model accuracy
+gdp_logit_acc <- sum(diag(confusion_logit_gdp)) / nrow(GDPDeaths) * 100
+gdp_logit_acc
 
 ```
 
@@ -184,6 +209,33 @@ InflationDeaths
 ```
 
 ```{r}
+# logistic regression
+inflation_logit <- lm(attacks ~ average, data = InflationDeaths)
+msummary(inflation_logit)
+
+```
+
+```{r}
+# logistic confusion matrix
+inflation_logitProb <- predict(inflation_logit, newdata = InflationDeaths, 
+                               type = "response")
+inflation_logit <- ifelse(inflation_logitProb > mean(InflationDeaths$attacks), 
+                          yes = "above", "below")
+confusion_logit_inflation <- tally(inflation_logit ~ above_below, 
+                                   data = InflationDeaths, format = "count")
+confusion_logit_inflation
+
+```
+
+```{r}
+# model accuracy
+inflation_logit_acc <- sum(diag(confusion_logit_inflation)) / 
+                           nrow(InflationDeaths) * 100
+inflation_logit_acc
+
+```
+
+```{r}
 # Data frame involving total country spending
 SpendingDeaths <- create_deaths_table("General government total expenditure",
                                       "Percent of GDP")
@@ -191,10 +243,61 @@ SpendingDeaths
 ```
 
 ```{r}
+# logistic regression
+spending_logit <- lm(attacks ~ average, data = SpendingDeaths)
+msummary(spending_logit)
+
+```
+
+```{r}
+# logistic confusion matrix
+spending_logitProb <- predict(spending_logit, newdata = SpendingDeaths, 
+                              type = "response")
+spending_logit <- ifelse(spending_logitProb > mean(SpendingDeaths$attacks), 
+                         yes = "above", "below")
+confusion_logit_spending <- tally(spending_logit ~ above_below, data = SpendingDeaths, 
+                                  format = "count")
+confusion_logit_spending
+
+```
+
+```{r}
+# model accuracy
+spending_logit_acc <- sum(diag(confusion_logit_spending)) / nrow(SpendingDeaths) * 100
+spending_logit_acc
+
+```
+
+```{r}
 # Data frame involving percent change in imported goods and services
 ImportDeaths <- create_deaths_table("Volume of imports of goods and services",
                                     "Percent change")
 ImportDeaths
+
+```
+
+```{r}
+# logistic regression
+import_logit <- lm(attacks ~ average, data = ImportDeaths)
+msummary(import_logit)
+
+```
+
+```{r}
+# logistic confusion matrix
+import_logitProb <- predict(import_logit, newdata = ImportDeaths, type = "response")
+import_logit <- ifelse(import_logitProb > mean(ImportDeaths$attacks), 
+                       yes = "above", "below")
+confusion_logit_import <- tally(import_logit ~ above_below, data = ImportDeaths, 
+                             format = "count")
+confusion_logit_import
+
+```
+
+```{r}
+# model accuracy
+import_logit_acc <- sum(diag(confusion_logit_import)) / nrow(ImportDeaths) * 100
+import_logit_acc
 
 ```
 
