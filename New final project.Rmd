@@ -26,13 +26,13 @@ econData <- read.csv("WEO_Data.csv")
 
 
 ```{r}
-year_terrorism_deaths <-
+terrorism_deaths <-
   terrorism %>%
   group_by(country_txt) %>%
   summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
   arrange(desc(deaths))
 
-year_terrorism_deaths
+terrorism_deaths
 ```
 
 ```{r}
@@ -118,7 +118,7 @@ create_deaths_table <- function(x, y){
   econAverages %>%
     filter(Subject.Descriptor == x, Units == y) %>%
     rename("country_txt" = "Country") %>%
-    left_join(terrorism, by = "country_txt") %>%
+    left_join(terrorism_deaths, by = "country_txt") %>%
     rename("Country" = "country_txt")
 }
 
@@ -187,33 +187,33 @@ ggplot(data = year_terrorism_deaths, aes(x = Year, y = attacks)) +
 ```
 
 ```{r}
-ytd2 <- year_terrorism_deaths[-c(1)]
+td2 <- terrorism_deaths[-c(1)]
 
-ytd2 <-
-  ytd2 %>%
+td2 <-
+  td2 %>%
   select(attacks, deaths) %>%
   arrange(desc(attacks)) %>%
   head(25)
 
-ytd_top_25 <-
-  year_terrorism_deaths %>%
+td_top_25 <-
+  terrorism_deaths %>%
   arrange(desc(attacks)) %>%
   head(25)
 
-ytd_std <-
-  scale(ytd2) %>%
+td_std <-
+  scale(td2) %>%
   as.data.frame()
 
-ytd_dist <- dist(ytd_std)
+td_dist <- dist(td_std)
 
-ytd_dendo <-
-  ytd_dist %>%
+td_dendo <-
+  td_dist %>%
   hclust(method = "complete")
 
-labels <- ytd_top_25$country_txt
+labels <- td_top_25$country_txt
 
-ytd_dendo %>%
+td_dendo %>%
   plot(cex = 0.9, labels = labels, lwd = 2,
-       main = "NCI60 Dendogram with Complete Linkage")
+       main = "Countries with Most Terrorist Attacks")
 ```
 
