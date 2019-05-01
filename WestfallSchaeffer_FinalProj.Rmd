@@ -6,6 +6,9 @@ output: html_notebook
 ---
 
 ```{r}
+# clear environment
+rm(list = ls())
+
 # Packages
 library(mdsr)
 library(readr)
@@ -16,10 +19,7 @@ library(wordcloud)
 library(readtext)
 library(class)
 library(tibble)
-library(tm)
-library(SnowballC)
 library(wordcloud)
-library(RColorBrewer)
 library(randomForest)
 
 # load data
