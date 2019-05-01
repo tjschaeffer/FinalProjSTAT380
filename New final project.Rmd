@@ -22,6 +22,9 @@ library(wordcloud)
 library(RColorBrewer)
 library(randomForest)
 
+# load data
+data("stop_words")
+
 ```
 
 First we must load the data sets. The terrorism data set takes some extra consideration due to its large size.
@@ -33,7 +36,7 @@ terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrori
 econData <- read.csv("WEO_Data.csv")
 ```
 
-Since the terrorism data set has too many columns to show, we will filter it down to information that we really care about. This is the countries that had the most deaths from terrorist attacks.
+Since the terrorism data set has too many columns to show, we will filter it down to information that we really care about. This is the number of attacks that each country has had.
 
 ```{r}
 terrorism_deaths <-
@@ -45,22 +48,47 @@ terrorism_deaths <-
 terrorism_deaths
 ```
 
+Now we'll look at some of the words associated with terrorist attacks to see if we can get a better idea of what we're working with.
+
 ```{r}
 terrorism_words <-
   terrorism %>%
-  mutate(weapsubtype1_txt = as.character(weapsubtype1_txt)) %>%
-  select(weapsubtype1_txt) %>%
-  unnest_tokens(output = word, input = weapsubtype1_txt)
-terrorism_words
+  select(attacktype1_txt, weaptype1_txt, weapsubtype1_txt, weapdetail) %>%
+  gather(key = type, value = input) %>%
+  select(input)
+
+terrorism_words <-
+  terrorism_words %>%
+  unnest_tokens(output = word, input = input)
+
+terrorism_words %>%
+  count(word, sort = TRUE)
 
 ```
+
+Now we need to take out all of the "stop words," words like the, a, an, and others.
 
 ```{r}
-wordcloud("terrorism_words.txt", max.words = 10)
+terrorism_words <-
+  terrorism_words %>%
+  filter(!(word %in% stop_words$word))
+  
+terrorism_words %>%
+  count(word, sort = TRUE)
 
 ```
 
-Now, we can plot the coordinates of each terrorist attack to see where in the world a higher percentage of terrorist attacks occur. To avoid overplotting, we take a sample of 5000 random attacks. From this, we can see that a lot of attacks are clustered in the Middle East and India, Central and South America, and Southeast Asia.
+Then we'll make a word cloud showing what words are most used when describing terrorist attacks. We also don't want "unknown" as part of it, so we take steps to get rid of that word.
+
+```{r}
+terrorism_words %>%
+  count(word) %>%
+  filter(n < 100000) %>%
+  with(., wordcloud(word, n, max.words = 45))
+
+```
+
+Moving past that, it is interesting to plot the coordinates of each terrorist attack to see where in the world a higher percentage of terrorist attacks occur. To avoid overplotting, we take a sample of 5000 random attacks. From this, we can see that a lot of attacks are clustered in the Middle East and India, Central and South America, and Southeast Asia.
 
 ```{r}
 terrorism %>%
