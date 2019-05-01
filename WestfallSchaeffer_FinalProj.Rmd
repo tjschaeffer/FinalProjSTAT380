@@ -1,0 +1,454 @@
+---
+title: "STAT 380 Final Project"
+subtitle: "An Analysis of Terrorism and Economics"
+author: "Greg Westfall and TJ Schaeffer"
+output: html_notebook
+---
+
+```{r}
+# Packages
+library(mdsr)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(wordcloud)
+library(readtext)
+library(class)
+library(tibble)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+library(randomForest)
+
+# load data
+data("stop_words")
+
+```
+
+First we must load the data sets. The terrorism data set takes some extra consideration due to its large size.
+
+```{r}
+# Reading in Terrorism 
+terrorism <- read.table(unz("globalterrorismdb_0718dist.csv.zip", "globalterrorismdb_0718dist.csv"), nrows=181692, header=T, fill =T, quote="\"", sep=",")
+# Reading in Econ Data
+econData <- read.csv("WEO_Data.csv")
+```
+
+Since the terrorism data set has too many columns to show, we will filter it down to information that we really care about. This is the number of attacks that each country has had.
+
+```{r}
+terrorism_deaths <-
+  terrorism %>%
+  group_by(country_txt) %>%
+  summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
+  arrange(desc(deaths))
+
+terrorism_deaths
+```
+
+Now we'll look at some of the words associated with terrorist attacks to see if we can get a better idea of what we're working with.
+
+```{r}
+terrorism_words <-
+  terrorism %>%
+  select(attacktype1_txt, weaptype1_txt, weapsubtype1_txt, weapdetail) %>%
+  gather(key = type, value = input) %>%
+  select(input)
+
+terrorism_words <-
+  terrorism_words %>%
+  unnest_tokens(output = word, input = input)
+
+terrorism_words %>%
+  count(word, sort = TRUE)
+
+```
+
+Now we need to take out all of the "stop words," words like the, a, an, and others.
+
+```{r}
+terrorism_words <-
+  terrorism_words %>%
+  filter(!(word %in% stop_words$word))
+  
+terrorism_words %>%
+  count(word, sort = TRUE)
+
+```
+
+Then we'll make a word cloud showing what words are most used when describing terrorist attacks. We also don't want "unknown" as part of it, so we take steps to get rid of that word.
+
+```{r}
+terrorism_words %>%
+  count(word) %>%
+  filter(n < 100000) %>%
+  with(., wordcloud(word, n, max.words = 45))
+
+```
+
+Moving past that, it is interesting to plot the coordinates of each terrorist attack to see where in the world a higher percentage of terrorist attacks occur. To avoid overplotting, we take a sample of 5000 random attacks. From this, we can see that a lot of attacks are clustered in the Middle East and India, Central and South America, and Southeast Asia.
+
+```{r}
+terrorism %>%
+  sample(5000) %>%
+  ggplot(aes(x = longitude, y = latitude)) +
+  geom_point() +
+  ggtitle("Terrorist Attacks Around the World")
+```
+
+Now we just want to look at the 25 countries with the most terrorist attacks. To evaluate the similarity between them, we make a dendogram to look at their relationships. It tells us that Iraq is far and away an outlier in terms of attacks.
+
+```{r}
+td2 <- terrorism_deaths[-c(1)]
+
+td2 <-
+  td2 %>%
+  select(attacks, deaths) %>%
+  arrange(desc(attacks)) %>%
+  head(25)
+
+td_top_25 <-
+  terrorism_deaths %>%
+  arrange(desc(attacks)) %>%
+  head(25)
+
+td_std <-
+  scale(td2) %>%
+  as.data.frame()
+
+td_dist <- dist(td_std)
+
+td_dendo <-
+  td_dist %>%
+  hclust(method = "complete")
+
+labels <- td_top_25$country_txt
+
+td_dendo %>%
+  plot(cex = 0.9, labels = labels, lwd = 2,
+       main = "Countries with Most Terrorist Attacks")
+```
+
+Next we will examine how the number of terrorist attacks in the six countries with the most of them changed over time. This shows us that the number of attacks in most countries has spiked in recent years, although it was highest in Colombia in the 1980s and 90s.
+
+```{r}
+Top_6_Countries <-
+  terrorism %>%
+  filter(country_txt == "Iraq" | country_txt == "Pakistan" | 
+         country_txt == "Afghanistan" | country_txt == "India" | 
+         country_txt == "Colombia" | country_txt == "Philippines") %>%
+  group_by(country_txt, iyear) %>%
+  summarise(Attacks = n())
+
+Top_6_Countries %>%
+  ggplot(aes(x = iyear, y = Attacks)) +
+  geom_point() + geom_line() +
+  facet_wrap(~country_txt) +
+  ggtitle("Terrorist Attacks over the Years")
+
+```
+
+Looking specifically at the U.S., we can see that most terrorist attacks happen in coastal places, which happens to be where the most heavily populated cities are. We also wanted to examine which attacks were deadliest, so we filtered out the attacks of September 11, 2001 since they are outliers in terms of number of deaths. Even after doing this, one attack seems to have killed a lot more than the others. This happens to be the Oklahoma City bombing, which happened in 1995.
+
+```{r}
+terrorism %>%
+  filter(country_txt == "United States") %>%
+  filter(longitude < 0) %>%
+  filter(nkillus > 0 & nkillus < 200) %>%
+  ggplot(aes(x = longitude, y = latitude)) +
+  geom_point(aes(color = nkillus)) +
+  ggtitle("Terrorist Attacks in the United States")
+```
+
+Next, we want to look at our economic data in conjunction with the terrorism data to see if there are any indicators that we can use to look out for terrorism.
+
+First, the values in the econ data frame are not numeric, so we will change that with the `apply` function. Then we'll clean up the data a little bit.
+
+```{r}
+# Using apply to change values in data frame to numbers
+econNumeric <- apply(X = econData[,5:30], FUN = as.numeric, MARGIN = 2)
+
+econDataNew <-
+  econData %>%
+  select(c(1:4))
+  
+econData2 <-
+  as.data.frame(econNumeric)
+
+econDataNew <-
+  econDataNew %>%
+  cbind(econData2)
+
+econDataNew
+```
+
+In order to work with the data, it would be a lot easier to have a large number of rows instead of columns. We'll use `gather` to accomplish this.
+
+```{r}
+# Using gather function to make data frame tidy
+econDataTidy <-
+  econDataNew %>%
+  gather(key = "Year", value = "Value", 5:30)
+
+econDataTidy
+
+```
+
+Next we'll look at a bunch of different measures of economic well-being and average them over the past 20 years.
+
+```{r}
+# Creating average of values over the 26 years found in the data frame
+econAverages <-
+  econDataTidy %>%
+  group_by(Country, Subject.Descriptor, Units) %>%
+  summarise(average = mean(na.omit(Value)))
+
+econAverages
+
+```
+
+Since we want to look at the effects of several different predictors, it will be easiest to create a function to help us out.
+
+```{r}
+# User-defined function to create data frame based off subject indicator
+create_deaths_table <- function(x, y){
+  econAverages %>%
+    filter(Subject.Descriptor == x, Units == y) %>%
+    rename("country_txt" = "Country") %>%
+    left_join(terrorism_deaths, by = "country_txt") %>%
+    filter(!is.na(attacks) & !is.na(deaths)) %>%
+    rename("Country" = "country_txt") %>%
+    mutate(above_below = ifelse(attacks >= 1073.441, "above", "below"))
+}
+
+```
+
+First we'll look at how a country's population affects number of terrorist attacks.
+
+```{r}
+# Data frame with population and attacks/deaths
+PopDeaths <- create_deaths_table("Population", "Persons")
+PopDeaths
+```
+
+The linear regression model tells us that population is a significant predictor in the number of terrorist attacks a country experiences.
+
+```{r}
+# logistic regression
+pop_logit <- lm(attacks ~ average, data = PopDeaths)
+msummary(pop_logit)
+
+```
+
+The predictive model is also very accurate, with it predicting successfully whether or not a country has an above average number of terrorist attacks based off of their population 83.2% of the time.
+
+```{r}
+# logistic confusion matrix
+pop_logitProb <- predict(pop_logit, newdata = PopDeaths, type = "response")
+pop_logit <- ifelse(pop_logitProb > mean(PopDeaths$attacks), yes = "above", "below")
+confusion_logit_pop <- tally(pop_logit ~ above_below, data = PopDeaths, 
+                             format = "count")
+confusion_logit_pop
+
+```
+
+```{r}
+# model accuracy
+pop_logit_acc <- sum(diag(confusion_logit_pop)) / nrow(PopDeaths) * 100
+pop_logit_acc
+
+```
+
+Next we'll see it per capita GDP has any relevance to terrorist attacks.
+
+```{r}
+# Data frame with GDP
+GDPDeaths <- create_deaths_table("Gross domestic product per capita, constant prices",
+                                 "Purchasing power parity; 2011 international dollar")
+GDPDeaths
+
+```
+
+The regression model tells us that per capita GDP is not a significant predictor.
+
+```{r}
+# logistic regression
+gdp_logit <- lm(attacks ~ average, data = GDPDeaths)
+msummary(gdp_logit)
+
+```
+
+Additionally, the predictive model is only correct 41% of the time, which is worse than guessing.
+
+```{r}
+# logistic confusion matrix
+gdp_logitProb <- predict(gdp_logit, newdata = GDPDeaths, type = "response")
+gdp_logit <- ifelse(gdp_logitProb > mean(GDPDeaths$attacks), yes = "above", "below")
+confusion_logit_gdp <- tally(gdp_logit ~ above_below, data = GDPDeaths, 
+                             format = "count")
+confusion_logit_gdp
+
+```
+
+```{r}
+# model accuracy
+gdp_logit_acc <- sum(diag(confusion_logit_gdp)) / nrow(GDPDeaths) * 100
+gdp_logit_acc
+
+```
+
+Now we'll see if inflation has any bearing on terrorist attacks.
+
+```{r}
+# Data Frame with inflation
+InflationDeaths <- create_deaths_table("Inflation, average consumer prices",
+                                       "Index")
+InflationDeaths
+```
+
+Unfortunately, inflation is not a significant predictor either.
+
+```{r}
+# logistic regression
+inflation_logit <- lm(attacks ~ average, data = InflationDeaths)
+msummary(inflation_logit)
+
+```
+
+The inflation predictive model is also the worst one we've seen so far, being correct only 21.1% of the time.
+
+```{r}
+# logistic confusion matrix
+inflation_logitProb <- predict(inflation_logit, newdata = InflationDeaths, 
+                               type = "response")
+inflation_logit <- ifelse(inflation_logitProb > mean(InflationDeaths$attacks), 
+                          yes = "above", "below")
+confusion_logit_inflation <- tally(inflation_logit ~ above_below, 
+                                   data = InflationDeaths, format = "count")
+confusion_logit_inflation
+
+```
+
+```{r}
+# model accuracy
+inflation_logit_acc <- sum(diag(confusion_logit_inflation)) / 
+                           nrow(InflationDeaths) * 100
+inflation_logit_acc
+
+```
+
+Now we'll look at whether a country's total government expenditure as a percent of their GDP has any impact.
+
+```{r}
+# Data frame involving total country spending
+SpendingDeaths <- create_deaths_table("General government total expenditure",
+                                      "Percent of GDP")
+SpendingDeaths
+```
+
+Once again, the regression model shows no significance.
+
+```{r}
+# logistic regression
+spending_logit <- lm(attacks ~ average, data = SpendingDeaths)
+msummary(spending_logit)
+
+```
+
+The predictive model is also middle-of-the-road, as it is correct 49.1% of the time.
+
+```{r}
+# logistic confusion matrix
+spending_logitProb <- predict(spending_logit, newdata = SpendingDeaths, 
+                              type = "response")
+spending_logit <- ifelse(spending_logitProb > mean(SpendingDeaths$attacks), 
+                         yes = "above", "below")
+confusion_logit_spending <- tally(spending_logit ~ above_below, data = SpendingDeaths, 
+                                  format = "count")
+confusion_logit_spending
+
+```
+
+```{r}
+# model accuracy
+spending_logit_acc <- sum(diag(confusion_logit_spending)) / nrow(SpendingDeaths) * 100
+spending_logit_acc
+
+```
+
+Finally, we'll see if a country's volume of imports has any effects.
+
+```{r}
+# Data frame involving percent change in imported goods and services
+ImportDeaths <- create_deaths_table("Volume of imports of goods and services",
+                                    "Percent change")
+ImportDeaths
+
+```
+
+The regression model tells us once again that volume of imports is not a significant predictor.
+
+```{r}
+# logistic regression
+import_logit <- lm(attacks ~ average, data = ImportDeaths)
+msummary(import_logit)
+
+```
+
+Although volume of imports is not significant, the predictive model managed to crack the 50% barrier (52.25% to be exact), making it the second most accurate out of the ones we created.
+
+```{r}
+# logistic confusion matrix
+import_logitProb <- predict(import_logit, newdata = ImportDeaths, type = "response")
+import_logit <- ifelse(import_logitProb > mean(ImportDeaths$attacks), 
+                       yes = "above", "below")
+confusion_logit_import <- tally(import_logit ~ above_below, data = ImportDeaths, 
+                             format = "count")
+confusion_logit_import
+
+```
+
+```{r}
+# model accuracy
+import_logit_acc <- sum(diag(confusion_logit_import)) / nrow(ImportDeaths) * 100
+import_logit_acc
+
+```
+
+Our supervised learning showed us that out of all the predictors we looked at, the only one that has any real bearing on a country's number of terrorist attacks is their population. Unfortunately, there's not much we can advise to do to change this, so countries with larger populations must live with the increased risk of experiencing terrorist attacks.
+
+To see if this holds true on a larger scale, we can plot the world population over time along with the number of global of terrorist attacks over the past 20 years. As expected, the number of terrorist attacks has increased as the world population has. However, the number of terrorist attacks fluctuates much more wildly than the global population. Maybe we could examine why this is so in future projects.
+
+```{r}
+YearEconData <-
+  econDataTidy %>%
+  filter(Subject.Descriptor == "Population") 
+
+year_terrorism_deaths <-
+  terrorism %>%
+  group_by(iyear) %>%
+  filter(iyear >= 1999) %>%
+  summarise(attacks = n(), deaths = sum(na.omit(nkill))) %>%
+  rename("Year" = "iyear") %>%
+  arrange(Year)
+
+YearEconDataClean <-
+  YearEconData %>%
+  mutate(Year = as.numeric(gsub("X", "", Year))) %>%
+  group_by(Year) %>%
+  filter(Year <= 2017) %>%
+  summarise(worldPop = sum(na.omit(Value)))
+
+ggplot(data = year_terrorism_deaths, aes(x = Year, y = attacks)) +
+  geom_point(color = "red", shape = 15) + geom_line(color = "red") +
+  geom_point(aes(x = Year, y = worldPop), color = "blue", data = YearEconDataClean) +
+  geom_line(aes(x = Year, y = worldPop), color = "blue", data = YearEconDataClean) +
+  ylab("Attacks / World Population") +
+  ggtitle("World Pop. (Blue) and Num. of Attacks (Red) over Time")
+```
+
+
+
+
